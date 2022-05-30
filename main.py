@@ -33,19 +33,12 @@ key_func = lambda x: user_ids_vocabulary(x["user_id"])
 reduce_func = lambda key, dataset: dataset.batch(100)
 train = ratings_data.group_by_window(key_func=key_func, reduce_func=reduce_func, window_size=100)
 
-for x in train.take(1):
-  for key, value in x.items():
-    print(f"Tytuł filmu: {key}: {value.shape}")
-    print(f"Przykładowi użytkownicy {key}: {value[:10].numpy()}")
-    print()
-
 
 def _features_and_labels(
     x: Dict[str, tf.Tensor]) -> Tuple[Dict[str, tf.Tensor], tf.Tensor]:
     labels = x.pop("user_rating")
     return x, labels
 
-print(ratings_data)
 
 train = train.map(_features_and_labels)
 
@@ -69,17 +62,30 @@ pp.pprint(history.history)
 for movie_titles in feature_data.batch(2000):
     break
 
+print(" ***** Lista polubionych filmów dla wybranego użytkownika wraz z ocenami *****")
 selected_id = input("Podaj id użytkownika: ")
 
-# Wygeneruj listę dla użytkownika o podanym id.
+# Przefiltrowanie zbioru filmów na podstawie podanego id
+ds = ratings_data.filter(lambda x: x["user_id"] == selected_id)
+ilosc_filmow = input("Ile filmów polubionych przez użytkownika chcesz zobaczyć?")
+print()
+ds1 = ds.take(int(ilosc_filmow))
+df = tfds.as_numpy(ds1)
+print()
+# Wyświetl polubione filmy wraz z ocenami
+for ex in df:
+    print(ex)
+
+# Wygeneruj listę polecanych filmów dla użytkownika o podanym id.
 inputs = {
     "user_id":
         tf.expand_dims(tf.repeat("selected_id", repeats=movie_titles.shape[0]), axis=0),
     "movie_title":
         tf.expand_dims(movie_titles, axis=0)
 }
+print(inputs)
 
-# Get movie recommendations for user 42.
+# Wyświetl listę rekomendowanych filmów dla użytkownika o podanym ID
 scores = model(inputs)
 titles = tfr.utils.sort_by_scores(scores, [tf.expand_dims(movie_titles, axis=0)])[0]
 print(f"Wygenerowana lista dla użytkownika nr: ,: {selected_id, titles[0, :10]}")

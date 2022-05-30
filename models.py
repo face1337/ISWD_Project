@@ -8,7 +8,7 @@ class RankingModel(Model):
   def __init__(self, user_vocab, movie_vocab):
     super().__init__()
 
-    # Set up user and movie vocabulary and embedding.
+    # Przygotowanie użytkowników oraz słownika z filmami
     self.user_vocab = user_vocab
     self.movie_vocab = movie_vocab
     self.user_embed = layers.Embedding(user_vocab.vocabulary_size(),
@@ -17,8 +17,7 @@ class RankingModel(Model):
                                                  64)
 
   def call(self, features: Dict[str, tf.Tensor]) -> tf.Tensor:
-    # Define how the ranking scores are computed:
-    # Take the dot-product of the user embeddings with the movie embeddings.
+    # Określenie jak filmy są dobierane, np. na podstawie tytułu:
 
     embeddings_user= self.user_embed(self.user_vocab(features["user_id"]))
     embeddings_movie = self.movie_embed(
